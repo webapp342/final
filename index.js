@@ -23,9 +23,25 @@ const User = mongoose.model('User', userSchema);
 
 app.post('/api/users', async (req, res) => {
   const { username } = req.body;
-  const newUser = new User({ username });
-  await newUser.save();
-  res.status(201).send(newUser);
+
+  try {
+    // Veritabanında kullanıcı adını kontrol et
+    const existingUser = await User.findOne({ username });
+
+    if (existingUser) {
+      // Kullanıcı zaten varsa, yanıt gönder
+      return res.status(200).send({ message: 'User already exists', user: existingUser });
+    }
+
+    // Kullanıcı yoksa, yeni kullanıcıyı ekle
+    const newUser = new User({ username });
+    await newUser.save();
+
+    res.status(201).send(newUser);
+  } catch (error) {
+    console.error('Error saving user:', error);
+    res.status(500).send({ error: 'Internal Server Error' });
+  }
 });
 
 app.listen(3000, () => {
